@@ -21,7 +21,7 @@ public func configure(_ app: Application) throws {
     try! app.autoMigrate().wait()
     
     if app.environment != .production {
-        app.http.server.configuration.hostname = "192.168.3.79"
+        app.http.server.configuration.hostname = "10.0.1.15"
     }
     
     // register routes
@@ -31,7 +31,7 @@ public func configure(_ app: Application) throws {
     apnsEnvironment = app.environment == .production ? .production : .sandbox
     
     let auth: APNSwiftConfiguration.AuthenticationMethod = try .jwt(
-        key: .private(filePath: "/Users/brian.jo/Codes/APNS_KEY/AuthKey_D54W4A79D9.p8"),
+        key: .private(filePath: "/Users/mrtajo/Code/Auths/AuthKey_D54W4A79D9.p8"),
         keyIdentifier: "D54W4A79D9",
         teamIdentifier: "7YV3XSFHJM"
     )
