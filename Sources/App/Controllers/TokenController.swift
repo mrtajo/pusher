@@ -36,6 +36,7 @@ struct TokenController {
     }
     
     func notify(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        print("notify start")
         let alert = APNSwiftAlert(title: "Hello!", body: "How are you today?")
         
         // 1
@@ -64,7 +65,38 @@ struct TokenController {
             }
     }
     
+    func stemp(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        print("stemp start")
+        let alert = APNSwiftAlert(title: "카카오페이", body: "스탬프 꽝 !!!")
+        
+        // 1
+        return Token.query(on: req.db)
+            .all()
+            // 2
+            .flatMap { tokens in
+                // 3
+                tokens.map { token in
+                    req.apns.send(alert, to: token.token)
+                        // 4
+                        .flatMapError {
+                            // Unless APNs said it was a bad device token, just ignore the error.
+                            guard case let APNSwiftError.ResponseError.badRequest(response) = $0,
+                                  response == .badDeviceToken else {
+                                return req.db.eventLoop.future()
+                            }
+                            
+                            return token.delete(on: req.db)
+                        }
+                }
+                // 5
+                .flatten(on: req.eventLoop)
+                // 6
+                .transform(to: .noContent)
+            }
+    }
+    
     func getIp(req: Request) throws -> EventLoopFuture<HTTPStatus> {
+        print("getIp start")
         // 1
         let alert = APNSwiftAlert(title: "Updated Server", body: req.application.http.server.configuration.hostname)
         do {
@@ -90,6 +122,7 @@ extension TokenController: RouteCollection {
         tokens.post(use: create)
         tokens.delete(":token", use: delete)
         tokens.post("notify", use: notify)
+        tokens.post("stemp", use: stemp)
         tokens.post("ip", use: getIp)
     }
 }
